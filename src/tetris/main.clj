@@ -1,5 +1,6 @@
 (ns tetris.main
-  (:require [clojure.set :as cs]
+  (:require [tetris.pieces :as p]
+            [clojure.set :as cs]
             [quil.core :as q]))
 
 ;; Pieces: 
@@ -36,7 +37,8 @@
 ;; DONE: rewrite the unit piece logic in a way that is easier extendable to 
 ;;       non-trivial pieces; implementation: replaced plain integer with set
 ;;       as the first value of the game state vector
-;; TODO: write logic for pieces of non-trivial shapes
+;; DONE: write logic for pieces of non-trivial shapes
+;; TODO: need to use 2d coordinates after all (for wall overlap checks)
 
 ;(defn complete-row? [row]
 ;  (every? true? row))
@@ -50,7 +52,7 @@
   (rand-int width))
 
 (def empty-bucket #{})
-(def init-state [#{(pick-x)} empty-bucket])
+(def init-state [(p/single-piece (pick-x)) empty-bucket])
 (def game-history (atom [init-state]))
 
 (defn move-piece 
@@ -82,12 +84,12 @@
   "When piece is sinked it becomes a part of the static content of the bucket."
   [game-state]
   (let [[piece field] game-state]
-    (assoc game-state 1 (clojure.set/union field piece))))
+    (assoc game-state 1 (cs/union field piece))))
 
 (defn spawn-piece 
   "Spawn a new piece at the top of the bucket."
   [game-state]
-  (let [new-piece #{(pick-x)}]
+  (let [new-piece (p/single-piece (pick-x))]
     (assoc game-state 0 new-piece)))
 
 (defn game-over? 
@@ -109,7 +111,7 @@
   "Turn game state in a list of 0s and 1s."
   [game-state]
   (let [[piece field] game-state
-        all-cells (clojure.set/union field piece)]
+        all-cells (cs/union field piece)]
     (for [i all-slots] (if (all-cells i) 1 0))))
 
 (defn visualize-row
@@ -133,68 +135,6 @@
     #_(print-state (vectorize-state (last @game-history)))
     (swap! game-history #(conj % (game-step (last @game-history)))))
   @game-history)
-
-;; ============================================================================
-;; pieces
-;; ============================================================================
-(defn square-piece 
-  [p0]
-  (let [p1 (inc p0)
-        p2 (+ width p0)
-        p3 (+ width p1)] 
-    [p0 #{p1 p2 p3}]))
-
-(defn gamma-piece 
-  [p0]
-  (let [p1 (inc p0)
-        p2 (inc p1)
-        p3 (+ width p0)] 
-    [p0 #{p1 p2 p3}]))
-
-(defn gamma-piece-mirror
-  [p0]
-  (let [p1 (inc p0)
-        p2 (inc p1)
-        p3 (+ width p2)] 
-    [p0 #{p1 p2 p3}]))
-
-(defn tau-piece 
-  [p0]
-  (let [p1 (inc p0)
-        p2 (inc p1)
-        p3 (+ width p1)] 
-    [p0 #{p1 p2 p3}]))
-
-(defn sausage-piece 
-  [p0]
-  (let [p1 (inc p0)
-        p2 (inc p1)
-        p3 (inc p2)] 
-    [p0 #{p1 p2 p3}]))
-
-(defn step-piece 
-  [p0]
-  (let [p1 (inc p0)
-        p2 (+ width p1)
-        p3 (inc p2)] 
-    [p0 #{p1 p2 p3}]))
-
-(defn step-piece-mirror
-  [p0]
-  (let [p1 (inc p0)
-        p2 (+ width p0)
-        p3 (dec p2)] 
-    [p0 #{p1 p2 p3}]))
-
-(defn test-run
-  []
-  ;;(reset! game-history [(square-piece 0)]))
-  ;;(reset! game-history [(gamma-piece 0)]))
-  ;;(reset! game-history [(tau-piece 0)]))
-  ;;(reset! game-history [(gamma-piece-mirror 0)]))
-  ;;(reset! game-history [(sausage-piece 0)]))
-  ;;(reset! game-history [(step-piece 0)]))
-  (reset! game-history [(step-piece-mirror 1)]))
 
 ;; ============================================================================
 ;; plotting
