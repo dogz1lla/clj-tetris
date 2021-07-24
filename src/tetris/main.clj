@@ -33,12 +33,15 @@
 ;; DONE: push side effects (interacting with state) to the boundaries
 ;; DONE: write logic to visualize the game state
 ;; DONE: use quil to animate the game run
+;; DONE: rewrite the unit piece logic in a way that is easier extendable to 
+;;       non-trivial pieces; implementation: replaced plain integer with set
+;;       as the first value of the game state vector
 ;; TODO: write logic for pieces of non-trivial shapes
 
 ;(defn complete-row? [row]
 ;  (every? true? row))
 
-(def width 10)
+(def width 20)
 (def height 30)
 (def max-idx (* height width))
 (def all-slots (range max-idx))
@@ -47,44 +50,45 @@
   (rand-int width))
 
 (def empty-bucket #{})
-(def init-state [(pick-x) empty-bucket])
+(def init-state [#{(pick-x)} empty-bucket])
 (def game-history (atom [init-state]))
 
 (defn move-piece 
   "Make the piece fall by one unit towards bottom."
   [game-state]
-  (let [current-idx (first game-state)]
-    (assoc game-state 0 (+ width current-idx))))
+  (let [current-positions (first game-state)]
+    (assoc game-state 0 (into #{} (map #(+ width %) current-positions)))))
 
 (defn occupied? 
   "Check if the next space in piece's way is already taken."
-  [new-idx field]
-  (contains? field new-idx))
+  [new-positions field]
+  (not-every? false? (map #(contains? field %) new-positions)))
 
 (defn piece-at-bottom? 
   "Check if the piece reached the bottom of the bucket."
-  [idx]
-  (<= (- max-idx idx) width))
+  [positions]
+  (not-every? false? (map #(<= (- max-idx %) width) positions)))
 
 (defn piece-sinked? 
   "Check if the piece is 'sinked' i.e., it is either at the bottom or 
   the next space is occupied."
   [game-state]
-  (let [[idx field] game-state]
-    (or (occupied? (+ idx width) field)
-        (piece-at-bottom? idx))))
+  (let [[piece field] game-state
+        piece-shift (into #{} (map #(+ width %) piece))]
+    (or (occupied? piece-shift field)
+        (piece-at-bottom? piece))))
 
 (defn freeze-piece 
   "When piece is sinked it becomes a part of the static content of the bucket."
   [game-state]
-  (let [[idx field] game-state]
-    (assoc game-state 1 (conj field idx))))
+  (let [[piece field] game-state]
+    (assoc game-state 1 (clojure.set/union field piece))))
 
 (defn spawn-piece 
   "Spawn a new piece at the top of the bucket."
   [game-state]
-  (let [new-idx (pick-x)]
-    (assoc game-state 0 new-idx)))
+  (let [new-piece #{(pick-x)}]
+    (assoc game-state 0 new-piece)))
 
 (defn game-over? 
   "Game ends when there are no free places anymore."
@@ -104,9 +108,9 @@
 (defn vectorize-state
   "Turn game state in a list of 0s and 1s."
   [game-state]
-  (let [[idx field] game-state
-        pieces (conj field idx)]
-    (for [i all-slots] (if (pieces i) 1 0))))
+  (let [[piece field] game-state
+        all-cells (clojure.set/union field piece)]
+    (for [i all-slots] (if (all-cells i) 1 0))))
 
 (defn visualize-row
   "Turn a row of the vectorized state into a string of Xs and Os."
@@ -118,7 +122,6 @@
   [vectorized-state]
   (let [rows (partition width vectorized-state)]
     (doseq [row rows]
-      #_(println row)
       (println (visualize-row row))))
   (println))
 
@@ -132,11 +135,73 @@
   @game-history)
 
 ;; ============================================================================
+;; pieces
+;; ============================================================================
+(defn square-piece 
+  [p0]
+  (let [p1 (inc p0)
+        p2 (+ width p0)
+        p3 (+ width p1)] 
+    [p0 #{p1 p2 p3}]))
+
+(defn gamma-piece 
+  [p0]
+  (let [p1 (inc p0)
+        p2 (inc p1)
+        p3 (+ width p0)] 
+    [p0 #{p1 p2 p3}]))
+
+(defn gamma-piece-mirror
+  [p0]
+  (let [p1 (inc p0)
+        p2 (inc p1)
+        p3 (+ width p2)] 
+    [p0 #{p1 p2 p3}]))
+
+(defn tau-piece 
+  [p0]
+  (let [p1 (inc p0)
+        p2 (inc p1)
+        p3 (+ width p1)] 
+    [p0 #{p1 p2 p3}]))
+
+(defn sausage-piece 
+  [p0]
+  (let [p1 (inc p0)
+        p2 (inc p1)
+        p3 (inc p2)] 
+    [p0 #{p1 p2 p3}]))
+
+(defn step-piece 
+  [p0]
+  (let [p1 (inc p0)
+        p2 (+ width p1)
+        p3 (inc p2)] 
+    [p0 #{p1 p2 p3}]))
+
+(defn step-piece-mirror
+  [p0]
+  (let [p1 (inc p0)
+        p2 (+ width p0)
+        p3 (dec p2)] 
+    [p0 #{p1 p2 p3}]))
+
+(defn test-run
+  []
+  ;;(reset! game-history [(square-piece 0)]))
+  ;;(reset! game-history [(gamma-piece 0)]))
+  ;;(reset! game-history [(tau-piece 0)]))
+  ;;(reset! game-history [(gamma-piece-mirror 0)]))
+  ;;(reset! game-history [(sausage-piece 0)]))
+  ;;(reset! game-history [(step-piece 0)]))
+  (reset! game-history [(step-piece-mirror 1)]))
+
+;; ============================================================================
 ;; plotting
 ;; ============================================================================
-(def box {:lx 500 :ly 800})
 (def lx 500)
 (def ly 800)
+(def box {:lx lx :ly ly})
 (def a (min (quot lx width) (quot ly height)))
 
 (defn lattice
@@ -152,6 +217,7 @@
   (clear-screen)
   (q/frame-rate 1000)
   (run-game)
+  #_(test-run)
   (println (str "Number of moves: " (count @game-history))))
 
 (defn piece 
