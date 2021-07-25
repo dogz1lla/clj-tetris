@@ -39,7 +39,7 @@
 ;;       as the first value of the game state vector
 ;; DONE: write logic for pieces of non-trivial shapes
 ;; DONE: need to use 2d coordinates after all (for wall overlap checks)
-;; TODO: prevent wall overlaps on piece spawn
+;; DONE: prevent wall overlaps on piece spawn
 ;; TODO: think how to formulate game-over in terms of empty set of possible 
 ;;       moves
 
@@ -99,7 +99,12 @@
   [game-state]
   ;;(let [new-piece (p/single-piece (pick-x) 0)]
   ;;(let [new-piece (p/square-piece (pick-x) 0 width)]
-  (let [new-piece (p/gamma-piece (pick-x) 0 width)]
+  ;;(let [new-piece (p/gamma-piece (pick-x) 0 width)]
+  ;;(let [new-piece (p/gamma-piece-mirror (pick-x) 0 width)]
+  ;;(let [new-piece (p/sausage-piece (pick-x) 0 width)]
+  ;;(let [new-piece (p/step-piece (pick-x) 0 width)]
+  ;;(let [new-piece (p/step-piece-mirror (pick-x) 0 width)]
+  (let [new-piece (p/tau-piece (pick-x) 0 width)]
     (assoc game-state 0 new-piece)))
 
 (defn game-over? 

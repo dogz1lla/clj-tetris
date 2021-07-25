@@ -46,39 +46,55 @@
     gamma))
 
 (defn gamma-piece-mirror
-  [p0 width]
-  (let [p1 (inc p0)
-        p2 (inc p1)
-        p3 (+ width p2)] 
-    [p0 #{p1 p2 p3}]))
+  [x0 y0 width]
+  (let [x (loop [i x0] (if (< (+ i 2) width) i (recur (dec i))))
+        p0 [x y0]
+        p1 [(inc x) y0]
+        p2 [(+ x 2) y0]
+        p3 [(+ x 2) (inc y0)]
+        gamma #{p0 p1 p2 p3}] 
+    gamma))
 
-(defn tau-piece 
-  [p0 width]
-  (let [p1 (inc p0)
-        p2 (inc p1)
-        p3 (+ width p1)] 
-    [p0 #{p1 p2 p3}]))
+(defn tau-piece
+  [x0 y0 width]
+  (let [x (loop [i x0] (if (< (+ i 2) width) i (recur (dec i))))
+        p0 [x y0]
+        p1 [(inc x) y0]
+        p2 [(+ x 2) y0]
+        p3 [(inc x) (inc y0)]
+        tau #{p0 p1 p2 p3}] 
+    tau))
 
-(defn sausage-piece 
-  [p0]
-  (let [p1 (inc p0)
-        p2 (inc p1)
-        p3 (inc p2)] 
-    [p0 #{p1 p2 p3}]))
+(defn sausage-piece
+  [x0 y0 width]
+  (let [x (loop [i x0] (if (< (+ i 3) width) i (recur (dec i))))
+        p0 [x y0]
+        p1 [(inc x) y0]
+        p2 [(+ x 2) y0]
+        p3 [(+ x 3) y0]
+        sausage #{p0 p1 p2 p3}] 
+    sausage))
 
-(defn step-piece 
-  [p0 width]
-  (let [p1 (inc p0)
-        p2 (+ width p1)
-        p3 (inc p2)] 
-    [p0 #{p1 p2 p3}]))
+(defn step-piece
+  [x0 y0 width]
+  (let [x (loop [i x0] (if (< (+ i 2) width) i (recur (dec i))))
+        p0 [x y0]
+        p1 [(inc x) y0]
+        p2 [(inc x) (inc y0)]
+        p3 [(+ x 2) (inc y0)]
+        step #{p0 p1 p2 p3}] 
+    step))
 
 (defn step-piece-mirror
-  [p0 width]
-  (let [p1 (inc p0)
-        p2 (+ width p0)
-        p3 (dec p2)] 
-    [p0 #{p1 p2 p3}]))
+  [x0 y0 width]
+  (let [xl (loop [i x0] (if (>= (dec i) 0) i (recur (inc i))))
+        xr (loop [i xl] (if (< (+ i 2) width) i (recur (dec i))))
+        p0 [xr y0]
+        p1 [(inc xr) y0]
+        p2 [(inc xr) (inc y0)]
+        p3 [(+ xr 2) (inc y0)]
+        step #{p0 p1 p2 p3}] 
+    step))
 
 #_(defn test-run
   [width]
