@@ -27,20 +27,23 @@
 
 (defn square-piece 
   [x0 y0 width]
-  (let [p0 [x0 y0]
-        p1 [(inc x0) y0]
-        p2 [x0 (inc y0)]
-        p3 [(inc x0) (inc y0)]
+  (let [x (loop [i x0] (if (< (inc i) width) i (recur (dec i))))
+        p0 [x y0]
+        p1 [(inc x) y0]
+        p2 [x (inc y0)]
+        p3 [(inc x) (inc y0)]
         square #{p0 p1 p2 p3}]
     square))
 
 (defn gamma-piece 
   [x0 y0 width]
-  (let [p0 [x0 y0]
-        p1 [(inc x0) y0]
-        p2 [(+ x0 2) y0]
-        p3 [x0 (inc y0)]] 
-    #{p0 p1 p2 p3}))
+  (let [x (loop [i x0] (if (< (+ i 2) width) i (recur (dec i))))
+        p0 [x y0]
+        p1 [(inc x) y0]
+        p2 [(+ x 2) y0]
+        p3 [x (inc y0)]
+        gamma #{p0 p1 p2 p3}] 
+    gamma))
 
 (defn gamma-piece-mirror
   [p0 width]
