@@ -95,13 +95,3 @@
         p3 [(+ xr 2) (inc y0)]
         step #{p0 p1 p2 p3}] 
     step))
-
-#_(defn test-run
-  [width]
-  ;;(reset! game-history [(square-piece 0)]))
-  ;;(reset! game-history [(gamma-piece 0)]))
-  ;;(reset! game-history [(tau-piece 0)]))
-  ;;(reset! game-history [(gamma-piece-mirror 0)]))
-  ;;(reset! game-history [(sausage-piece 0)]))
-  ;;(reset! game-history [(step-piece 0)]))
-  (reset! game-history [(step-piece-mirror 1 width)]))

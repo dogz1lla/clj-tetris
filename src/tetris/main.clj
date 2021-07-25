@@ -94,6 +94,16 @@
   (let [[piece field] game-state]
     (assoc game-state 1 (cs/union field piece))))
 
+(defn spawn-random-piece
+  []
+  (apply (rand-nth [p/square-piece 
+                    p/gamma-piece
+                    p/gamma-piece-mirror
+                    p/tau-piece
+                    p/sausage-piece
+                    p/step-piece
+                    p/step-piece-mirror]) (list (pick-x) 0 width)))
+
 (defn spawn-piece 
   "Spawn a new piece at the top of the bucket."
   [game-state]
@@ -104,15 +114,22 @@
   ;;(let [new-piece (p/sausage-piece (pick-x) 0 width)]
   ;;(let [new-piece (p/step-piece (pick-x) 0 width)]
   ;;(let [new-piece (p/step-piece-mirror (pick-x) 0 width)]
-  (let [new-piece (p/tau-piece (pick-x) 0 width)]
+  ;;(let [new-piece (p/tau-piece (pick-x) 0 width)]
+  (let [new-piece (spawn-random-piece)]
     (assoc game-state 0 new-piece)))
+
+(defn bucket-clogged?
+  [game-state]
+  (let [[_ frozen-pieces] game-state] 
+    (not-every? false? (map #(zero? (last %)) frozen-pieces))))
 
 (defn game-over? 
   "Game ends when there are no free places anymore."
   [game-state]
   ;;(empty? (cs/difference (set all-slots) (last game-state))))
   ;;(<= max-idx (count (last game-state))))
-  (<= 100 (count (last game-state))))
+  ;;(<= 100 (count (last game-state))))
+  (bucket-clogged? game-state))
 
 (defn game-step 
   "Advance the game by one step. 
@@ -174,9 +191,8 @@
 (defn setup
   []
   (clear-screen)
-  (q/frame-rate 1000)
+  (q/frame-rate 200)
   (run-game)
-  #_(test-run)
   (println (str "Number of moves: " (count @game-history))))
 
 (defn piece 
