@@ -40,6 +40,8 @@
 ;; DONE: write logic for pieces of non-trivial shapes
 ;; DONE: need to use 2d coordinates after all (for wall overlap checks)
 ;; TODO: prevent wall overlaps on piece spawn
+;; TODO: think how to formulate game-over in terms of empty set of possible 
+;;       moves
 
 ;(defn complete-row? [row]
 ;  (every? true? row))
