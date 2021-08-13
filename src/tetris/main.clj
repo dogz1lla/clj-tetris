@@ -42,6 +42,7 @@
 ;; DONE: prevent wall overlaps on piece spawn
 ;; TODO: think how to formulate game-over in terms of empty set of possible 
 ;;       moves
+;; TODO: integrate animation into game run itself
 
 ;(defn complete-row? [row]
 ;  (every? true? row))
@@ -166,9 +167,6 @@
   "Run the game until game over."
   []
   (while (not (game-over? (last @game-history)))
-    #_(Thread/sleep 1000)
-    #_(print-state (vectorize-state (last @game-history)))
-    #_(println (last @game-history))
     (swap! game-history #(conj % (game-step (last @game-history)))))
   @game-history)
 
@@ -215,15 +213,16 @@
   []
   (let [i @current-step]
     (swap! current-step inc)
-    (if (< i (count @game-history)) (nth @game-history i) (last @game-history))))
+    (if (< i (count @game-history)) 
+      (nth @game-history i) 
+      (last @game-history))))
 
 (defn draw
   []
   (clear-screen)
-  (q/fill 220 100 255)
+  (q/fill 220 150 255)
   (let [state (make-step)
         lattice (lattice)]
-    #_(Thread/sleep 1000)
     (draw-game-state state lattice)))
 
 (q/defsketch tetris-animation
