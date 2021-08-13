@@ -189,8 +189,8 @@
 (defn setup
   []
   (clear-screen)
-  (q/frame-rate 200)
-  (run-game)
+  (q/frame-rate 20)
+  #_(run-game)
   (println (str "Number of moves: " (count @game-history))))
 
 (defn piece 
@@ -207,23 +207,20 @@
         pieces (filter-pieces vectorized-state lattice)]
     (doseq [[x0 y0] (remove nil? pieces)] (piece x0 y0))))
 
-(def current-step (atom 0))
-
-(defn make-step
+(defn current-state
   []
-  (let [i @current-step]
-    (swap! current-step inc)
-    (if (< i (count @game-history)) 
-      (nth @game-history i) 
-      (last @game-history))))
+  (if (game-over? (last @game-history)) 
+    nil
+    (swap! game-history #(conj % (game-step (last @game-history)))))
+  game-history)
 
 (defn draw
   []
   (clear-screen)
   (q/fill 220 150 255)
-  (let [state (make-step)
+  (let [history (current-state)
         lattice (lattice)]
-    (draw-game-state state lattice)))
+    (draw-game-state (last @history) lattice)))
 
 (q/defsketch tetris-animation
   :title "tetris"
