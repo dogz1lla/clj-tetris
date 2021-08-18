@@ -42,7 +42,7 @@
 ;; DONE: prevent wall overlaps on piece spawn
 ;; TODO: think how to formulate game-over in terms of empty set of possible 
 ;;       moves
-;; TODO: integrate animation into game run itself
+;; DONE: integrate animation into game run itself
 
 ;(defn complete-row? [row]
 ;  (every? true? row))
@@ -218,6 +218,7 @@
   []
   (clear-screen)
   (q/fill 220 150 255)
+  (if (q/key-pressed?) (println (str (q/key-as-keyword) " key pressed!") nil))
   (let [history (current-state)
         lattice (lattice)]
     (draw-game-state (last @history) lattice)))
