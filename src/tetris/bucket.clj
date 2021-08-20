@@ -13,3 +13,6 @@
 (defrecord Bucket [width height contents]
   BucketProtocol
   (clogged? [this] false))
+
+(defn init-bucket [width height]
+  (->Bucket width height []))
