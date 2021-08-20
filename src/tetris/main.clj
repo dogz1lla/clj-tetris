@@ -43,6 +43,8 @@
 ;; TODO: think how to formulate game-over in terms of empty set of possible 
 ;;       moves
 ;; DONE: integrate animation into game run itself
+;; DONE: rewrite pieces in terms of protocol/records
+;; TODO: encode the state given the new representation of the pieces
 
 ;(defn complete-row? [row]
 ;  (every? true? row))
@@ -61,6 +63,7 @@
 (def game-history (atom [init-state]))
 
 (defn fall 
+  ;; this
   [piece]
   (assoc piece 1 (inc (last piece))))
 
@@ -68,22 +71,26 @@
   "Make the piece fall by one unit towards bottom."
   [game-state]
   (let [pieces (first game-state)]
+  ;; this
     (assoc game-state 0 (into #{} (map fall pieces)))))
 
 (defn occupied? 
   "Check if the next space in piece's way is already taken."
   [new-positions field]
+  ;; this
   (not-every? false? (map #(contains? field %) new-positions)))
 
 (defn piece-at-bottom? 
   "Check if the piece reached the bottom of the bucket."
   [pieces]
+  ;; this
   (not-every? true? (map #(< (last %) (dec height)) pieces)))
 
 (defn piece-sinked? 
   "Check if the piece is 'sinked' i.e., it is either at the bottom or 
   the next space is occupied."
   [game-state]
+  ;; this
   (let [[pieces field] game-state
         piece-shift (into #{} (map fall pieces))]
     (or (occupied? piece-shift field)
@@ -92,11 +99,13 @@
 (defn freeze-piece 
   "When piece is sinked it becomes a part of the static content of the bucket."
   [game-state]
+  ;; this
   (let [[piece field] game-state]
     (assoc game-state 1 (cs/union field piece))))
 
 (defn spawn-random-piece
   []
+  ;; this
   (apply (rand-nth [p/square-piece 
                     p/gamma-piece
                     p/gamma-piece-mirror
@@ -107,6 +116,7 @@
 
 (defn spawn-piece 
   "Spawn a new piece at the top of the bucket."
+  ;; this
   [game-state]
   ;;(let [new-piece (p/single-piece (pick-x) 0)]
   ;;(let [new-piece (p/square-piece (pick-x) 0 width)]
