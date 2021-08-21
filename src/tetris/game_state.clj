@@ -3,8 +3,9 @@
             [tetris.bucket :as b]))
 
 
+(def test-counter (atom 0))
 ;; ============================================================================
-;; Bucket protocol
+;; Game state protocol
 ;; ============================================================================
 (defprotocol GameState
   "Game state."
@@ -17,7 +18,7 @@
     the next space is occupied.")
   (freeze-piece [this]
     "When piece is sinked it becomes a part of bucket contents.")
-  (new-piece [this]
+  (choose-next-piece [this]
     "Choose how to spawn a new piece.")
   (move-piece [this]
     "Drop the piece by one unit.")
@@ -29,13 +30,18 @@
     "Check if game reached its end."))
 
 
+;; ============================================================================
+;; Game
+;; ============================================================================
 (defrecord Tetris [piece bucket]
   GameState
 
   (occupied? [this new-piece-position]
     (let [{:keys [_ bucket]} this
-          bucket-set (set bucket)]
-      (not-every? false? (map #(contains? bucket-set %) new-piece-position))))
+          bucket-contents (:contents bucket)
+          bucket-set (set bucket-contents)
+          positions (vals new-piece-position)]
+      (not-every? false? (map #(contains? bucket-set %) positions))))
   
   (piece-at-bottom? [this]
     (let [{:keys [piece bucket]} this
@@ -58,27 +64,32 @@
           nil-piece (tetris.pieces.SquarePiece. nil nil nil nil)]
       (Tetris. nil-piece new-bucket)))
 
-  (new-piece [this]
+  (choose-next-piece [this]
     (let [{:keys [_ bucket]} this
           {:keys [width _ _]} bucket]
       (p/square-piece 0 0 width)))
 
   (spawn-piece [this] 
-    (let [{:keys [_ bucket]} this
-          new-piece (new-piece this)]
-      (Tetris. new-piece bucket)))
+    (let [new-piece (choose-next-piece this)]
+      (assoc this :piece new-piece)))
 
   (move-piece [this] 
-    (let [{:keys [piece bucket]} this
+    (let [{:keys [piece _]} this
           new-piece (p/fall piece)]
-      (Tetris. new-piece bucket)))
+      (assoc this :piece new-piece)))
 
   (step [this]
     (if (piece-sinked? this)
       (-> this freeze-piece spawn-piece)
-      (move-piece this))))
+      (move-piece this)))
+  
+  (game-over? [this]
+    (b/overflown? (:bucket this))))
 
-(defn game []
+;; ============================================================================
+;; Game init
+;; ============================================================================
+(defn init-game []
   (let[piece (p/square-piece 2 0 5)
-       bucket (b/init-bucket 5 10)]
+       bucket (b/init-bucket 5 11)]
     (->Tetris piece bucket)))
