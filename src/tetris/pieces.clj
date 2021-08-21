@@ -21,7 +21,7 @@
 (defrecord SquarePiece [p0 p1 p2 p3]
   Piece
 
-  (spawn [this x0 y0]
+  (spawn [_ x0 y0]
     (let [p0 [x0 y0]
           p1 [(inc x0) y0]
           p2 [x0 (inc y0)]
@@ -48,7 +48,7 @@
 (defrecord GammaPiece [p0 p1 p2 p3]
   Piece
 
-  (spawn [this x0 y0]
+  (spawn [_ x0 y0]
     (let [p0 [x0 y0]
           p1 [(inc x0) y0]
           p2 [(+ x0 2) y0]
@@ -74,7 +74,7 @@
 (defrecord GammaPieceMirror [p0 p1 p2 p3]
   Piece
 
-  (spawn [this x0 y0]
+  (spawn [_ x0 y0]
     (let [p0 [x0 y0]
           p1 [(inc x0) y0]
           p2 [(+ x0 2) y0]
@@ -101,7 +101,7 @@
 (defrecord TauPiece [p0 p1 p2 p3]
   Piece
 
-  (spawn [this x0 y0]
+  (spawn [_ x0 y0]
     (let [p0 [x0 y0]
           p1 [(inc x0) y0]
           p2 [(+ x0 2) y0]
@@ -128,7 +128,7 @@
 (defrecord SausagePiece [p0 p1 p2 p3]
   Piece
 
-  (spawn [this x0 y0]
+  (spawn [_ x0 y0]
     (let [p0 [x0 y0]
           p1 [(inc x0) y0]
           p2 [(+ x0 2) y0]
@@ -155,7 +155,7 @@
 (defrecord StepPiece [p0 p1 p2 p3]
   Piece
 
-  (spawn [this x0 y0]
+  (spawn [_ x0 y0]
     (let [p0 [x0 y0]
           p1 [(inc x0) y0]
           p2 [(inc x0) (inc y0)]
@@ -182,7 +182,7 @@
 (defrecord StepPieceMirror [p0 p1 p2 p3]
   Piece
 
-  (spawn [this x0 y0]
+  (spawn [_ x0 y0]
     (let [p0 [x0 y0]
           p1 [(inc x0) y0]
           p2 [(dec x0) (inc y0)]

@@ -6,13 +6,16 @@
 ;; ============================================================================
 (defprotocol BucketProtocol
   "A bucket protocol."
-  #_(spawn [this w h] 
-    "Init the bucket.")
-  (clogged? [this]))
+  (overflown? [this] 
+    "Check if the bucket is overflown."))
 
 (defrecord Bucket [width height contents]
   BucketProtocol
-  (clogged? [this] false))
+
+  (overflown? [this] 
+    (let [{:keys [_ bucket]} this
+          bucket-contents (:contents bucket)]
+      (not-every? false? (map #(zero? (last %)) bucket-contents)))))
 
 (defn init-bucket [width height]
   (->Bucket width height []))
