@@ -3,7 +3,6 @@
             [tetris.bucket :as b]))
 
 
-(def test-counter (atom 0))
 ;; ============================================================================
 ;; Game state protocol
 ;; ============================================================================
@@ -27,9 +26,11 @@
   (step [this]
     "Make a step of the game.")
   (shift-piece [this dx]
-    "Shift a piece.")
+    "Shift a piece horizontally.")
+  (piece-overlaps? [this new-piece-position]
+    "Check if the piece is overlapping with bucket contents.")
   (game-over? [this]
-    "Check if game reached its end."))
+    "Check if the game reached terminal state."))
 
 
 ;; ============================================================================
@@ -88,8 +89,22 @@
   (shift-piece [this dx] 
     (let [{:keys [piece _]} this
           {:keys [width _ _]} bucket
-          new-piece (p/shift piece dx width)]
-      (assoc this :piece new-piece)))
+          new-piece (p/shift piece dx width)
+          ovelaps? (piece-overlaps? this new-piece)]
+      (if ovelaps? 
+        this
+        (assoc this :piece new-piece))))
+
+  (piece-overlaps? [this new-piece-position]
+    (let [{:keys [_ bucket]} this
+          {:keys [_ _ contents]} bucket
+          pieces (vals new-piece-position)
+          bucket-contents contents
+          combined (reduce conj bucket-contents pieces)
+          combined-set (set combined)
+          n-combined (count combined)
+          n-combined-set (count combined-set)]
+      (not (= n-combined n-combined-set))))
 
   (game-over? [this]
     (b/overflown? (:bucket this))))
