@@ -99,5 +99,5 @@
 ;; ============================================================================
 (defn init-game []
   (let[piece (p/square-piece 2 0 5)
-       bucket (b/init-bucket 5 11)]
+       bucket (b/init-bucket 10 21)]
     (->Tetris piece bucket)))
