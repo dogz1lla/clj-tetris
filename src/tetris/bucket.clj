@@ -12,7 +12,8 @@
 (defrecord Bucket [width height contents]
   BucketProtocol
 
-  (overflown? [this] 
+  (overflown?
+    [this] 
     (let [{:keys [_ bucket]} this
           bucket-contents (:contents bucket)]
       (not-every? false? (map #(zero? (last %)) bucket-contents)))))
