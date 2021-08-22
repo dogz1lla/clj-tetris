@@ -21,7 +21,7 @@
 ;; position for more than one frame;
 ;;
 ;; DONE add shifting of pieces horizontally upon pressing left/right
-;; TODO fix a bug where collisions are not checked against frozen pieces when 
+;; DONE fix a bug where collisions are not checked against frozen pieces when 
 ;;       shifting piece horizontally
 (ns tetris.main
   (:require [tetris.game-state :as gs]
@@ -32,19 +32,6 @@
 (defn update-history [new-state]
   (swap! game-history #(conj % new-state)))
 
-;(defn run-game []
-;  (while (not (gs/game-over? (last @game-history)))
-;    (update-history (gs/step (last @game-history))))
-;  @game-history)
-
-#_(defn render-game [nx ny game-history]
-  (let [width (:width (:bucket (first @game-history)))
-        height (:height (:bucket (first @game-history)))
-        max-idx (* height width)
-        all-slots (range max-idx)
-        a (min (quot nx width) (quot ny height))
-        lattice (for [j (range height) i (range width)] [(* i a) (* j a)])]))
-
 ;; drawing
 (def lx 500)
 (def ly 800)
@@ -53,6 +40,7 @@
 (def max-idx (* height width))
 (def all-slots (range max-idx))
 (def a (min (quot lx width) (quot ly height)))
+(def lattice (for [j (range height) i (range width)] [(* i a) (* j a)]))
 
 (defn vectorize-state
   "Turn game state in a list of 0s and 1s."
@@ -63,10 +51,6 @@
         all-cells (reduce conj bucket-contents pieces)
         linearized-state (into #{} (map #(+ (* width (last %)) (first %)) all-cells))]
     (for [i all-slots] (if (linearized-state i) 1 0))))
-
-(defn lattice
-  []
-  (for [j (range height) i (range width)] [(* i a) (* j a)]))
 
 (defn clear-screen
   []
@@ -99,9 +83,8 @@
     (update-history (gs/step (last @game-history))))
   game-history)
 
-(defn shift-piece [direction]
-  (let [dx (* direction 1)
-        new-state (gs/shift-piece (last @game-history) dx)]
+(defn shift-piece [dx]
+  (let [new-state (gs/shift-piece (last @game-history) dx)]
     (update-history new-state)))
 
 (defn draw
@@ -117,8 +100,7 @@
       nil)
     nil)
   ;; draw the latest iteration of the game state
-  (let [history (update-game)
-        lattice (lattice)]
+  (let [history (update-game)]
     (draw-game-state (last @history) lattice)))
 
 (defn render-game []
