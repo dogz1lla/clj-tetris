@@ -26,6 +26,8 @@
     "Spawn a new piece at the top of the bucket.")
   (step [this]
     "Make a step of the game.")
+  (shift-piece [this dx]
+    "Shift a piece.")
   (game-over? [this]
     "Check if game reached its end."))
 
@@ -83,6 +85,12 @@
       (-> this freeze-piece spawn-piece)
       (move-piece this)))
   
+  (shift-piece [this dx] 
+    (let [{:keys [piece _]} this
+          {:keys [width _ _]} bucket
+          new-piece (p/shift piece dx width)]
+      (assoc this :piece new-piece)))
+
   (game-over? [this]
     (b/overflown? (:bucket this))))
 
