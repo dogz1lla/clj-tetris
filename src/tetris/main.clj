@@ -14,6 +14,15 @@
 ;; rendering, ie independent of the ticks; but that is automatically taken care
 ;; of because quil's key press events can happen anytime and then they will 
 ;; just change the external atom that holds the game.
+;;
+;; What i will need to do actually is to decouple the /movement/ of the piece
+;; from the update function;
+;; The piece has to move with a step of one unit; but it may stay in the same 
+;; position for more than one frame;
+;;
+;; DONE add shifting of pieces horizontally upon pressing left/right
+;; TODO fix a bug where collisions are not checked against frozen pieces when 
+;;       shifting piece horizontally
 (ns tetris.main
   (:require [tetris.game-state :as gs]
             [quil.core :as q]))
@@ -43,7 +52,6 @@
 (def height (:height (:bucket (first @game-history))))
 (def max-idx (* height width))
 (def all-slots (range max-idx))
-(def box {:lx lx :ly ly})
 (def a (min (quot lx width) (quot ly height)))
 
 (defn vectorize-state
@@ -71,7 +79,7 @@
 (defn setup
   []
   (clear-screen)
-  (q/frame-rate 20)
+  (q/frame-rate 10)
   (println (str "Number of moves: " (count @game-history))))
 
 (defn filter-pieces
@@ -92,24 +100,33 @@
   game-history)
 
 (defn shift-piece [direction]
-  (let [dx (* direction a)
+  (let [dx (* direction 1)
         new-state (gs/shift-piece (last @game-history) dx)]
     (update-history new-state)))
 
 (defn draw
   []
+  ;; reload canvas
   (clear-screen)
   (q/fill 220 150 255)
-  (if (q/key-pressed?) (println (str (q/key-as-keyword) " key pressed!")) nil)
+  ;; capture relevant key presses
+  (if (q/key-pressed?)
+    (case (q/key-as-keyword)
+      :left (shift-piece -1)
+      :right (shift-piece 1)
+      nil)
+    nil)
+  ;; draw the latest iteration of the game state
   (let [history (update-game)
         lattice (lattice)]
     (draw-game-state (last @history) lattice)))
 
-(q/defsketch tetris-animation
-  :title "tetris"
-  :settings #(q/smooth 2)
-  :setup setup
-  :draw draw
-  :features [:keep-on-top]
-  :size [(:lx box) (:ly box)]
-  :on-close #(println (str "closed! " (count (last (last @game-history))))))
+(defn render-game []
+  (q/defsketch tetris-animation
+    :title "tetris"
+    :settings #(q/smooth 2)
+    :setup setup
+    :draw draw
+    :features [:keep-on-top]
+    :size [lx ly]
+    :on-close #(println (str "closed! " (count (last (last @game-history)))))))
