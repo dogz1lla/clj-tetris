@@ -1,192 +1,60 @@
+;; Need to redefine the time inside the game. Currently it is coupled to the 
+;; quil update time (fps); the game should have it's own definition of time 
+;; and quil will draw "snapshots" of the game state at equially spaced time 
+;; intervals.
+;; Lets say the game state has its own internal clock that ticks every tau 
+;; seconds; and the drawing happens every t seconds and t > tau.
+;; Note that t has to be sufficiently large so that when player presses the 
+;; button it changes the rendered image so fast it is percieved as instant.
+;;
+;; Above approach wont work because there is only one loop that is allowed to
+;; run and that is the one in quil sketch.
+;; But we dont need the internal game time do we? The whole point of having it 
+;; is to be able to change the game state "in between" the time ticks of the 
+;; rendering, ie independent of the ticks; but that is automatically taken care
+;; of because quil's key press events can happen anytime and then they will 
+;; just change the external atom that holds the game.
 (ns tetris.main
-  (:require [tetris.pieces :as p]
-            [clojure.set :as cs]
+  (:require [tetris.game-state :as gs]
             [quil.core :as q]))
 
-;; Pieces: 
-;; xx  xxx  xxx   xx  xx    x   xxxx
-;; xx    x  x    xx    xx  xxx
-;; 
-;; each piece has 4 orientations 
-;; play field is a grid of lattice points; each point can be occupied or free
-;; once a row of the points is fully occupied it dissappears
-;;
-;; if the cells are described by numbers from 1 to n;
-;; then one can define the pieces for each of their orientations
-;; 
-;; i need to pick a "reference point" for each of the pieces 
-;; ie the point that describes its position
-;;
-;; [1 0 0 0 0 0 0 0]
-;; [0 0 1 0 0 0 0 0]
-;; [0 0 0 0 1 0 0 0]
-;; [0 0 0 0 0 0 1 0]
-;;
-;; 1. init the playing field: a piece at the top of the bucket (random x) and 
-;;    (optionally) pieces at the bottom;
-;; 2. on each step check if the piece is sinked; if it is spawn a new one (ie 
-;;    reset idx and create a 1 in that spot); if it isnt then move the piece; 
-;; 3. add the new state to the game atom;
-;;
-;; DONE: create a test run using the bucket and a single piece (just a 
-;;       single square); most likely need to move bucket into an atom.
-;; DONE: add several pieces to the bucket; add collision (pieces stack)
-;; DONE: push side effects (interacting with state) to the boundaries
-;; DONE: write logic to visualize the game state
-;; DONE: use quil to animate the game run
-;; DONE: rewrite the unit piece logic in a way that is easier extendable to 
-;;       non-trivial pieces; implementation: replaced plain integer with set
-;;       as the first value of the game state vector
-;; DONE: write logic for pieces of non-trivial shapes
-;; DONE: need to use 2d coordinates after all (for wall overlap checks)
-;; DONE: prevent wall overlaps on piece spawn
-;; TODO: think how to formulate game-over in terms of empty set of possible 
-;;       moves
-;; DONE: integrate animation into game run itself
-;; DONE: rewrite pieces in terms of protocol/records
-;; TODO: encode the state given the new representation of the pieces
+(def game-history (atom [(gs/init-game)]))
 
-;(defn complete-row? [row]
-;  (every? true? row))
+(defn update-history [new-state]
+  (swap! game-history #(conj % new-state)))
 
-(def width 20)
-(def height 30)
+;(defn run-game []
+;  (while (not (gs/game-over? (last @game-history)))
+;    (update-history (gs/step (last @game-history))))
+;  @game-history)
+
+#_(defn render-game [nx ny game-history]
+  (let [width (:width (:bucket (first @game-history)))
+        height (:height (:bucket (first @game-history)))
+        max-idx (* height width)
+        all-slots (range max-idx)
+        a (min (quot nx width) (quot ny height))
+        lattice (for [j (range height) i (range width)] [(* i a) (* j a)])]))
+
+;; drawing
+(def lx 500)
+(def ly 800)
+(def width (:width (:bucket (first @game-history))))
+(def height (:height (:bucket (first @game-history))))
 (def max-idx (* height width))
 (def all-slots (range max-idx))
-
-(defn pick-x [] 
-  (rand-int width))
-
-(def empty-bucket #{})
-;;(def init-state [(p/single-piece (pick-x) 0) empty-bucket])
-(def init-state [(p/square-piece (pick-x) 0 width) empty-bucket])
-(def game-history (atom [init-state]))
-
-(defn fall 
-  ;; this
-  [piece]
-  (assoc piece 1 (inc (last piece))))
-
-(defn move-piece 
-  "Make the piece fall by one unit towards bottom."
-  [game-state]
-  (let [pieces (first game-state)]
-  ;; this
-    (assoc game-state 0 (into #{} (map fall pieces)))))
-
-(defn occupied? 
-  "Check if the next space in piece's way is already taken."
-  [new-positions field]
-  ;; this
-  (not-every? false? (map #(contains? field %) new-positions)))
-
-(defn piece-at-bottom? 
-  "Check if the piece reached the bottom of the bucket."
-  [pieces]
-  ;; this
-  (not-every? true? (map #(< (last %) (dec height)) pieces)))
-
-(defn piece-sinked? 
-  "Check if the piece is 'sinked' i.e., it is either at the bottom or 
-  the next space is occupied."
-  [game-state]
-  ;; this
-  (let [[pieces field] game-state
-        piece-shift (into #{} (map fall pieces))]
-    (or (occupied? piece-shift field)
-        (piece-at-bottom? pieces))))
-
-(defn freeze-piece 
-  "When piece is sinked it becomes a part of the static content of the bucket."
-  [game-state]
-  ;; this
-  (let [[piece field] game-state]
-    (assoc game-state 1 (cs/union field piece))))
-
-(defn spawn-random-piece
-  []
-  ;; this
-  (apply (rand-nth [p/square-piece 
-                    p/gamma-piece
-                    p/gamma-piece-mirror
-                    p/tau-piece
-                    p/sausage-piece
-                    p/step-piece
-                    p/step-piece-mirror]) (list (pick-x) 0 width)))
-
-(defn spawn-piece 
-  "Spawn a new piece at the top of the bucket."
-  ;; this
-  [game-state]
-  ;;(let [new-piece (p/single-piece (pick-x) 0)]
-  ;;(let [new-piece (p/square-piece (pick-x) 0 width)]
-  ;;(let [new-piece (p/gamma-piece (pick-x) 0 width)]
-  ;;(let [new-piece (p/gamma-piece-mirror (pick-x) 0 width)]
-  ;;(let [new-piece (p/sausage-piece (pick-x) 0 width)]
-  ;;(let [new-piece (p/step-piece (pick-x) 0 width)]
-  ;;(let [new-piece (p/step-piece-mirror (pick-x) 0 width)]
-  ;;(let [new-piece (p/tau-piece (pick-x) 0 width)]
-  (let [new-piece (spawn-random-piece)]
-    (assoc game-state 0 new-piece)))
-
-(defn bucket-clogged?
-  [game-state]
-  (let [[_ frozen-pieces] game-state] 
-    (not-every? false? (map #(zero? (last %)) frozen-pieces))))
-
-(defn game-over? 
-  "Game ends when there are no free places anymore."
-  [game-state]
-  ;;(empty? (cs/difference (set all-slots) (last game-state))))
-  ;;(<= max-idx (count (last game-state))))
-  ;;(<= 100 (count (last game-state))))
-  (bucket-clogged? game-state))
-
-(defn game-step 
-  "Advance the game by one step. 
-  1. check if the piece is sinked; 
-  2. if it is then freeze it and spawn a new one;
-  3. else advance it by one unit."
-  [game-state]
-  (if (piece-sinked? game-state)
-    (-> game-state freeze-piece spawn-piece)
-    (move-piece game-state)))
+(def box {:lx lx :ly ly})
+(def a (min (quot lx width) (quot ly height)))
 
 (defn vectorize-state
   "Turn game state in a list of 0s and 1s."
   [game-state]
-  (let [[piece field] game-state
-        all-cells (cs/union field piece)
+  (let [{:keys [piece bucket]} game-state
+        pieces (vals piece)
+        bucket-contents (:contents bucket)
+        all-cells (reduce conj bucket-contents pieces)
         linearized-state (into #{} (map #(+ (* width (last %)) (first %)) all-cells))]
     (for [i all-slots] (if (linearized-state i) 1 0))))
-
-(defn visualize-row
-  "Turn a row of the vectorized state into a string of Xs and Os."
-  [row]
-  (reduce #(str %1 (if (pos? %2) "x" "o")) "" row))
-
-(defn print-state 
-  "Print every row of the game state as a string of Xs and Os."
-  [vectorized-state]
-  (let [rows (partition width vectorized-state)]
-    (doseq [row rows]
-      (println (visualize-row row))))
-  (println))
-
-(defn run-game 
-  "Run the game until game over."
-  []
-  (while (not (game-over? (last @game-history)))
-    (swap! game-history #(conj % (game-step (last @game-history)))))
-  @game-history)
-
-;; ============================================================================
-;; plotting
-;; ============================================================================
-(def lx 500)
-(def ly 800)
-(def box {:lx lx :ly ly})
-(def a (min (quot lx width) (quot ly height)))
 
 (defn lattice
   []
@@ -196,16 +64,15 @@
   []
   (q/background 200))
 
+(defn piece 
+  [x0 y0]
+  (q/rect x0 y0 a a))
+
 (defn setup
   []
   (clear-screen)
   (q/frame-rate 20)
-  #_(run-game)
   (println (str "Number of moves: " (count @game-history))))
-
-(defn piece 
-  [x0 y0]
-  (q/rect x0 y0 a a))
 
 (defn filter-pieces
   [vectorized-state lattice]
@@ -217,19 +84,24 @@
         pieces (filter-pieces vectorized-state lattice)]
     (doseq [[x0 y0] (remove nil? pieces)] (piece x0 y0))))
 
-(defn current-state
+(defn update-game
   []
-  (if (game-over? (last @game-history)) 
+  (if (gs/game-over? (last @game-history)) 
     nil
-    (swap! game-history #(conj % (game-step (last @game-history)))))
+    (update-history (gs/step (last @game-history))))
   game-history)
+
+(defn shift-piece [direction]
+  (let [dx (* direction a)
+        new-state (gs/shift-piece (last @game-history) dx)]
+    (update-history new-state)))
 
 (defn draw
   []
   (clear-screen)
   (q/fill 220 150 255)
-  (if (q/key-pressed?) (println (str (q/key-as-keyword) " key pressed!") nil))
-  (let [history (current-state)
+  (if (q/key-pressed?) (println (str (q/key-as-keyword) " key pressed!")) nil)
+  (let [history (update-game)
         lattice (lattice)]
     (draw-game-state (last @history) lattice)))
 
