@@ -9,7 +9,9 @@
 
 (def game-history (atom [(gs/init-game)]))
 
-(defn update-history [new-state]
+(defn update-history
+  "Append a new state to the game history list."
+  [new-state]
   (swap! game-history #(conj % new-state)))
 
 ;; drawing
@@ -24,36 +26,44 @@
 
 
 (defn clear-screen
+  "Fill the screen with a color."
   []
   (q/background 200))
 
 (defn piece 
+  "Draw a single unit piece."
   [x0 y0]
   (q/rect x0 y0 a a))
 
 (defn setup
+  "quil setup function."
   []
   (clear-screen)
   (q/frame-rate 10))
 
 (defn draw-game-state
+  "Vectorize the game state and draw unit pieces."
   [game-state lattice]
   (let [vectorized-state (u/vectorize-state game-state)
         pieces (u/filter-pieces vectorized-state lattice)]
     (doseq [[x0 y0] (remove nil? pieces)] (piece x0 y0))))
 
 (defn update-game
+  "Append game history vector until the game is over."
   []
   (if (gs/game-over? (last @game-history)) 
     nil
     (update-history (gs/step (last @game-history))))
   game-history)
 
-(defn shift-piece [dx]
+(defn shift-piece
+  "Function to be called upon pressing left/right arrow button."
+  [dx]
   (let [new-state (gs/shift-piece (last @game-history) dx)]
     (update-history new-state)))
 
 (defn draw
+  "quil draw function."
   []
   ;; reload canvas
   (clear-screen)
