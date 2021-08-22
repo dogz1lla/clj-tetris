@@ -8,7 +8,7 @@
   "A tetris piece protocol."
   (spawn [this x0 y0] 
     "Spawn a piece. Replacement for a constructor.")
-  (check-collisions [this width]
+  (check-wall-collision [this width]
     "Check if there is a collision with a wall.")
   (shift [this dx width]
     "Translate the piece horizontally by dx.")
@@ -28,7 +28,7 @@
           p3 [(inc x0) (inc y0)]]
       (SquarePiece. p0 p1 p2 p3)))
 
-  (check-collisions [this width]
+  (check-wall-collision [this width]
     (let [[x0 y0] (:p0 this)
           new-x0 (loop [i x0] 
                    (if (< (inc i) width) i (recur (dec i))))
@@ -43,7 +43,7 @@
     (let [[x0 y0] (:p0 this)
           new-x0 (+ dx x0)
           shifted (spawn this new-x0 y0)]
-      (check-collisions shifted width))))
+      (check-wall-collision shifted width))))
 
 (defrecord GammaPiece [p0 p1 p2 p3]
   Piece
@@ -55,7 +55,7 @@
           p3 [x0 (inc y0)]]
       (GammaPiece. p0 p1 p2 p3)))
 
-  (check-collisions [this width]
+  (check-wall-collision [this width]
     (let [[x0 y0] (:p0 this)
           new-x0 (loop [i x0] (if (< (+ i 2) width) i (recur (dec i))))
           new-x0 (if (< new-x0 0) 0 new-x0)]
@@ -69,7 +69,7 @@
     (let [[x0 y0] (:p0 this)
           new-x0 (+ dx x0)
           shifted (spawn this new-x0 y0)]
-      (check-collisions shifted width))))
+      (check-wall-collision shifted width))))
 
 (defrecord GammaPieceMirror [p0 p1 p2 p3]
   Piece
@@ -81,7 +81,7 @@
           p3 [(+ x0 2) (inc y0)]]
       (GammaPieceMirror. p0 p1 p2 p3)))
 
-  (check-collisions [this width]
+  (check-wall-collision [this width]
     (let [[x0 y0] (:p0 this)
           new-x0 (loop [i x0] (if (< (+ i 2) width) i (recur (dec i))))
           new-x0 (if (< new-x0 0) 0 new-x0)]
@@ -95,7 +95,7 @@
     (let [[x0 y0] (:p0 this)
           new-x0 (+ dx x0)
           shifted (spawn this new-x0 y0)]
-      (check-collisions shifted width))))
+      (check-wall-collision shifted width))))
 
 
 (defrecord TauPiece [p0 p1 p2 p3]
@@ -108,7 +108,7 @@
           p3 [(inc x0) (inc y0)]]
       (TauPiece. p0 p1 p2 p3)))
 
-  (check-collisions [this width]
+  (check-wall-collision [this width]
     (let [[x0 y0] (:p0 this)
           new-x0 (loop [i x0] (if (< (+ i 2) width) i (recur (dec i))))
           new-x0 (if (< new-x0 0) 0 new-x0)]
@@ -122,7 +122,7 @@
     (let [[x0 y0] (:p0 this)
           new-x0 (+ dx x0)
           shifted (spawn this new-x0 y0)]
-      (check-collisions shifted width))))
+      (check-wall-collision shifted width))))
 
 
 (defrecord SausagePiece [p0 p1 p2 p3]
@@ -135,7 +135,7 @@
           p3 [(+ x0 3) y0]]
       (SausagePiece. p0 p1 p2 p3)))
 
-  (check-collisions [this width]
+  (check-wall-collision [this width]
     (let [[x0 y0] (:p0 this)
           new-x0 (loop [i x0] (if (< (+ i 3) width) i (recur (dec i))))
           new-x0 (if (< new-x0 0) 0 new-x0)]
@@ -149,7 +149,7 @@
     (let [[x0 y0] (:p0 this)
           new-x0 (+ dx x0)
           shifted (spawn this new-x0 y0)]
-      (check-collisions shifted width))))
+      (check-wall-collision shifted width))))
 
 
 (defrecord StepPiece [p0 p1 p2 p3]
@@ -162,7 +162,7 @@
           p3 [(+ x0 2) (inc y0)]]
       (StepPiece. p0 p1 p2 p3)))
 
-  (check-collisions [this width]
+  (check-wall-collision [this width]
     (let [[x0 y0] (:p0 this)
           new-x0 (loop [i x0] (if (< (+ i 2) width) i (recur (dec i))))
           new-x0 (if (< new-x0 0) 0 new-x0)]
@@ -176,7 +176,7 @@
     (let [[x0 y0] (:p0 this)
           new-x0 (+ dx x0)
           shifted (spawn this new-x0 y0)]
-      (check-collisions shifted width))))
+      (check-wall-collision shifted width))))
 
 
 (defrecord StepPieceMirror [p0 p1 p2 p3]
@@ -189,7 +189,7 @@
           p3 [x0 (inc y0)]]
       (StepPieceMirror. p0 p1 p2 p3)))
 
-  (check-collisions [this width]
+  (check-wall-collision [this width]
     (let [[x0 y0] (:p0 this)
           new-x0 (loop [i x0] (if (< (inc i) width) i (recur (dec i))))
           new-x0 (loop [i new-x0] (if (>= (dec i) 0) i (recur (inc i))))]
@@ -203,7 +203,7 @@
     (let [[x0 y0] (:p0 this)
           new-x0 (+ dx x0)
           shifted (spawn this new-x0 y0)]
-      (check-collisions shifted width))))
+      (check-wall-collision shifted width))))
 
 ;; ============================================================================
 ;; Piece initialization
@@ -211,34 +211,34 @@
 (defn square-piece [x0 y0 width]
   (-> (SquarePiece. nil nil nil nil)
       (spawn x0 y0)
-      (check-collisions width)))
+      (check-wall-collision width)))
 
 (defn gamma-piece [x0 y0 width]
   (-> (GammaPiece. nil nil nil nil)
       (spawn x0 y0)
-      (check-collisions width)))
+      (check-wall-collision width)))
 
 (defn gamma-piece-mirror [x0 y0 width]
   (-> (GammaPieceMirror. nil nil nil nil)
       (spawn x0 y0)
-      (check-collisions width)))
+      (check-wall-collision width)))
 
 (defn tau-piece [x0 y0 width]
   (-> (TauPiece. nil nil nil nil)
       (spawn x0 y0)
-      (check-collisions width)))
+      (check-wall-collision width)))
 
 (defn sausage-piece [x0 y0 width]
   (-> (SausagePiece. nil nil nil nil)
       (spawn x0 y0)
-      (check-collisions width)))
+      (check-wall-collision width)))
 
 (defn step-piece [x0 y0 width]
   (-> (StepPiece. nil nil nil nil)
       (spawn x0 y0)
-      (check-collisions width)))
+      (check-wall-collision width)))
 
 (defn step-piece-mirror [x0 y0 width]
   (-> (StepPieceMirror. nil nil nil nil)
       (spawn x0 y0)
-      (check-collisions width)))
+      (check-wall-collision width)))
