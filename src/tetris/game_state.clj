@@ -4,6 +4,19 @@
 
 
 ;; ============================================================================
+;; all implemented pieces, choose one randomly
+;; ============================================================================
+(def implemented-pieces
+  [#_p/gamma-piece
+   #_p/square-piece
+   p/sausage-piece
+   #_p/gamma-piece-mirror])
+
+(defn choose-piece-randomly
+  []
+  (rand-nth implemented-pieces))
+
+;; ============================================================================
 ;; Game state protocol
 ;; ============================================================================
 (defprotocol GameState
@@ -75,8 +88,7 @@
   (choose-next-piece [this]
     (let [{:keys [_ bucket]} this
           {:keys [width _ _]} bucket]
-      (p/gamma-piece 0 0 width)
-      #_(p/square-piece 0 0 width)))
+      ((choose-piece-randomly) 0 0 width)))
 
   (spawn-piece [this] 
     (let [new-piece (choose-next-piece this)]
@@ -132,6 +144,6 @@
 ;; Game init
 ;; ============================================================================
 (defn init-game []
-  (let[piece (p/gamma-piece 0 0 5)
+  (let[piece ((choose-piece-randomly) 0 0 5)
        bucket (b/init-bucket 10 21)]
     (->Tetris piece bucket)))

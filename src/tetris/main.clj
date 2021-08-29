@@ -1,9 +1,9 @@
 ;; DONE add shifting of pieces horizontally upon pressing left/right
 ;; DONE fix a bug where collisions are not checked against frozen pieces when 
 ;;       shifting piece horizontally
-;; TODO fix new piece spawn logic (switch to random piece)
-;; TODO think how to rotate pieces
-;; TODO fix rotation in the gamma-piece
+;; DONE fix new piece spawn logic (switch to random piece)
+;; DONE think how to rotate pieces
+;; DONE fix rotation in the gamma-piece
 ;; Ok so with rotation the problem is that rotating vanilla gamma piece is 
 ;; different from rotating a gamma piece that was rotated by say pi;
 ;; Need to introduce rotational degress of freedom.
@@ -13,8 +13,9 @@
 ;; [2  2] [1  2] [ 0  2] [2 1]
 ;; [1 -1] [0 -1] [-1 -1] [1 0]
 ;; 
-;; TODO rewrite piece logic so that it is centered around a unit vector 
+;; DONE rewrite piece logic so that it is centered around a unit vector 
 ;; attached to the piece, this way can encode orientation
+;; TODO implement full line erasure
 (ns tetris.main
   (:require [tetris.game-state :as gs]
             [tetris.pieces :as p]
@@ -115,10 +116,10 @@
     nil)
   ;; draw the latest iteration of the game state
   ;; NOTE test mode here
-  ;;(if (< (count @game-history) 50)
+  (if (< (count @game-history) 10)
     (let [history (update-game)]
       (draw-game-state (last @history) lattice))
-    (draw-game-state (last @game-history) lattice));;)
+    (draw-game-state (last @game-history) lattice)))
 
 (defn render-game []
   (q/defsketch tetris-animation
