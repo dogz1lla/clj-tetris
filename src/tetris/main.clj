@@ -1,7 +1,20 @@
 ;; DONE add shifting of pieces horizontally upon pressing left/right
 ;; DONE fix a bug where collisions are not checked against frozen pieces when 
 ;;       shifting piece horizontally
+;; TODO fix new piece spawn logic (switch to random piece)
 ;; TODO think how to rotate pieces
+;; TODO fix rotation in the gamma-piece
+;; Ok so with rotation the problem is that rotating vanilla gamma piece is 
+;; different from rotating a gamma piece that was rotated by say pi;
+;; Need to introduce rotational degress of freedom.
+;; [ 0 0] [1 0] [2 0] [ 0 1]
+;; [-1 1] [0 1] [1 1] [-1 0]
+;;
+;; [2  2] [1  2] [ 0  2] [2 1]
+;; [1 -1] [0 -1] [-1 -1] [1 0]
+;; 
+;; TODO rewrite piece logic so that it is centered around a unit vector 
+;; attached to the piece, this way can encode orientation
 (ns tetris.main
   (:require [tetris.game-state :as gs]
             [tetris.utils :as u]
@@ -10,7 +23,7 @@
 (def game-history (atom [(gs/init-game)]))
 
 (defn update-history
-  "Append a new state to the game history list."
+  "Append a new state to the game history vector."
   [new-state]
   (swap! game-history #(conj % new-state)))
 
@@ -62,6 +75,12 @@
   (let [new-state (gs/shift-piece (last @game-history) dx)]
     (update-history new-state)))
 
+(defn rotate-piece
+  "Function to be called upon pressing rotate key."
+  []
+  (let [new-state (gs/rotate-piece (last @game-history))]
+    (update-history new-state)))
+
 (defn draw
   "quil draw function."
   []
@@ -73,11 +92,15 @@
     (case (q/key-as-keyword)
       :left (shift-piece -1)
       :right (shift-piece 1)
+      :space (rotate-piece)
       nil)
     nil)
   ;; draw the latest iteration of the game state
+  ;; NOTE test mode here
+  (if (< (count @game-history) 50)
   (let [history (update-game)]
-    (draw-game-state (last @history) lattice)))
+    (draw-game-state (last @history) lattice))
+  (draw-game-state (last @game-history) lattice)))
 
 (defn render-game []
   (q/defsketch tetris-animation
