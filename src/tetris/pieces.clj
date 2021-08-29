@@ -227,6 +227,7 @@
 ;;           new-x0 (+ dx x0)
 ;;           shifted (spawn this new-x0 y0)]
 ;;       (check-wall-collision shifted width))))
+
 ;; 
 ;; ;; ============================================================================
 ;; ;; Piece initialization
@@ -291,13 +292,8 @@
 
 (defrecord GammaPiece [position orientation]
   Piece
-  ;; DONE implement linear algebra (take from snake)
-  ;; TODO wall collision code wont work on rotated pieces (x0 might not be the
-  ;;      outermost part)
-  ;; TODO implement rotation
 
   (parts [this]
-    ;; DONE this should depend on the orientation vector
     (let [{:keys [position orientation]} this
           p0 position
           p1 (la/vec+ p0 orientation)
@@ -351,7 +347,7 @@
           ;; NOTE need to round elements of the orientation vector because
           ;; coord has to have integer elements
           new-orientation-int [(Math/round (first new-orientation)) 
-                                (Math/round (last new-orientation))]
+                               (Math/round (last new-orientation))]
           new-position (compensate-rotation this position new-orientation-int)]
       (->GammaPiece new-position new-orientation-int))))
 
