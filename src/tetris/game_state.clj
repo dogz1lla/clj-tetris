@@ -45,28 +45,31 @@
     (let [{:keys [_ bucket]} this
           bucket-contents (:contents bucket)
           bucket-set (set bucket-contents)
-          positions (vals new-piece-position)]
+          positions (p/parts new-piece-position)]
       (not-every? false? (map #(contains? bucket-set %) positions))))
   
   (piece-at-bottom? [this]
     (let [{:keys [piece bucket]} this
           height (:height bucket)
-          pieces (vals piece)]
+          pieces (p/parts piece)]
       (not-every? true? (map #(< (last %) (dec height)) pieces))))
 
   (piece-sinked? [this]
-    (let [{:keys [piece _]} this
-          fallen-piece (p/fall piece)]
+    (let [{:keys [piece bucket]} this
+          {:keys [width]} bucket
+          fallen-piece (p/fall piece 1)
+          fallen-piece (p/check-left-wall-collision fallen-piece)
+          fallen-piece (p/check-right-wall-collision fallen-piece width)]
       (or (occupied? this fallen-piece) (piece-at-bottom? this))))
 
   (freeze-piece [this]
     (let [{:keys [piece bucket]} this
           {:keys [width height contents]} bucket
-          pieces (vals piece)
+          pieces (p/parts piece)
           bucket-contents contents
           new-bucket-contents (reduce conj bucket-contents pieces)
           new-bucket (tetris.bucket.Bucket. width height new-bucket-contents)
-          nil-piece (tetris.pieces.SquarePiece. nil nil nil nil)]
+          nil-piece nil]
       (Tetris. nil-piece new-bucket)))
 
   (choose-next-piece [this]
@@ -80,8 +83,11 @@
       (assoc this :piece new-piece)))
 
   (move-piece [this] 
-    (let [{:keys [piece _]} this
-          new-piece (p/fall piece)]
+    (let [{:keys [piece bucket]} this
+          {:keys [width]} bucket
+          new-piece (p/fall piece 1)
+          new-piece (p/check-left-wall-collision new-piece)
+          new-piece (p/check-right-wall-collision new-piece width)]
       (assoc this :piece new-piece)))
 
   (step [this]
@@ -90,9 +96,11 @@
       (move-piece this)))
   
   (shift-piece [this dx] 
-    (let [{:keys [piece _]} this
+    (let [{:keys [piece bucket]} this
           {:keys [width _ _]} bucket
-          shifted-piece (p/shift piece dx width)
+          shifted-piece (p/shift piece dx)
+          shifted-piece (p/check-left-wall-collision shifted-piece)
+          shifted-piece (p/check-right-wall-collision shifted-piece width)
           ovelaps? (piece-overlaps? this shifted-piece)]
       (if ovelaps? 
         this
@@ -109,7 +117,7 @@
   (piece-overlaps? [this new-piece-position]
     (let [{:keys [_ bucket]} this
           {:keys [_ _ contents]} bucket
-          pieces (vals new-piece-position)
+          pieces (p/parts new-piece-position)
           bucket-contents contents
           combined (reduce conj bucket-contents pieces)
           combined-set (set combined)
@@ -124,6 +132,6 @@
 ;; Game init
 ;; ============================================================================
 (defn init-game []
-  (let[piece (p/square-piece 2 0 5)
+  (let[piece (p/gamma-piece 0 0 5)
        bucket (b/init-bucket 10 21)]
     (->Tetris piece bucket)))

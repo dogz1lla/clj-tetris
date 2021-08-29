@@ -313,10 +313,10 @@
 
   (compensate-rotation [_ position orientation]
     (case orientation
-      [ 1  0] position
-      [ 0  1] (la/vec+ position [ 1 0])
-      [-1  0] (la/vec+ position [ 1 1])
-      [ 0 -1] (la/vec+ position [-2 1])))
+      [ 1  0] (la/vec+ position [ 0 -2])
+      [ 0  1] (la/vec+ position [ 1  0])
+      [-1  0] (la/vec+ position [ 1  1])
+      [ 0 -1] (la/vec+ position [-2  1])))
 
   (shift [this dx]
     (let [{:keys [orientation position]} this
@@ -330,7 +330,7 @@
 
   (check-left-wall-collision [this]
       (loop [current-piece this]
-        (let [piece-parts (parts this)
+        (let [piece-parts (parts current-piece)
               leftmost (u/leftmost piece-parts)]
           (if (>= leftmost 0)
             current-piece
@@ -338,7 +338,7 @@
 
   (check-right-wall-collision [this width]
       (loop [current-piece this]
-        (let [piece-parts (parts this)
+        (let [piece-parts (parts current-piece)
               rightmost (u/rightmost piece-parts)]
           (if (< rightmost width)
             current-piece
@@ -356,5 +356,4 @@
       (->GammaPiece new-position new-orientation-int))))
 
 (defn gamma-piece [x0 y0 width]
-  (-> (GammaPiece. [x0 y0] [1 0])
-      (check-right-wall-collision width)))
+  (check-right-wall-collision (GammaPiece. [x0 y0] [1 0]) width))

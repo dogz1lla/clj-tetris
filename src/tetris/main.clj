@@ -17,7 +17,8 @@
 ;; attached to the piece, this way can encode orientation
 (ns tetris.main
   (:require [tetris.game-state :as gs]
-            [tetris.utils :as u]
+            [tetris.pieces :as p]
+            #_[tetris.utils :as u]
             [quil.core :as q]))
 
 (def game-history (atom [(gs/init-game)]))
@@ -26,6 +27,23 @@
   "Append a new state to the game history vector."
   [new-state]
   (swap! game-history #(conj % new-state)))
+
+(defn vectorize-state
+  "Turn game state into a list of 0s and 1s."
+  [game-state]
+  (let [{:keys [piece bucket]} game-state
+        {:keys [width height contents]} bucket
+        pieces (p/parts piece)
+        all-cells (reduce conj contents pieces)
+        all-slots (range (* width height))
+        lin-coord (fn [coord] (+ (* width (last coord)) (first coord)))
+        linearized-state (into #{} (map lin-coord all-cells))]
+    (for [i all-slots] (if (linearized-state i) 1 0))))
+
+(defn filter-pieces
+  "Take a vectorized state and only replace zeros with nil."
+  [vectorized-state lattice]
+  (map #(if (pos? %1) %2 nil) vectorized-state lattice))
 
 ;; drawing
 (def lx 500)
@@ -57,8 +75,8 @@
 (defn draw-game-state
   "Vectorize the game state and draw unit pieces."
   [game-state lattice]
-  (let [vectorized-state (u/vectorize-state game-state)
-        pieces (u/filter-pieces vectorized-state lattice)]
+  (let [vectorized-state (vectorize-state game-state)
+        pieces (filter-pieces vectorized-state lattice)]
     (doseq [[x0 y0] (remove nil? pieces)] (piece x0 y0))))
 
 (defn update-game
@@ -97,10 +115,10 @@
     nil)
   ;; draw the latest iteration of the game state
   ;; NOTE test mode here
-  (if (< (count @game-history) 50)
-  (let [history (update-game)]
-    (draw-game-state (last @history) lattice))
-  (draw-game-state (last @game-history) lattice)))
+  ;;(if (< (count @game-history) 50)
+    (let [history (update-game)]
+      (draw-game-state (last @history) lattice))
+    (draw-game-state (last @game-history) lattice));;)
 
 (defn render-game []
   (q/defsketch tetris-animation
