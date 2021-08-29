@@ -27,6 +27,8 @@
     "Make a step of the game.")
   (shift-piece [this dx]
     "Shift a piece horizontally.")
+  (rotate-piece [this]
+    "Rotate piece.")
   (piece-overlaps? [this new-piece-position]
     "Check if the piece is overlapping with bucket contents.")
   (game-over? [this]
@@ -70,7 +72,8 @@
   (choose-next-piece [this]
     (let [{:keys [_ bucket]} this
           {:keys [width _ _]} bucket]
-      (p/square-piece 0 0 width)))
+      (p/gamma-piece 0 0 width)
+      #_(p/square-piece 0 0 width)))
 
   (spawn-piece [this] 
     (let [new-piece (choose-next-piece this)]
@@ -89,11 +92,19 @@
   (shift-piece [this dx] 
     (let [{:keys [piece _]} this
           {:keys [width _ _]} bucket
-          new-piece (p/shift piece dx width)
-          ovelaps? (piece-overlaps? this new-piece)]
+          shifted-piece (p/shift piece dx width)
+          ovelaps? (piece-overlaps? this shifted-piece)]
       (if ovelaps? 
         this
-        (assoc this :piece new-piece))))
+        (assoc this :piece shifted-piece))))
+
+  (rotate-piece [this] 
+    (let [{:keys [piece _]} this
+          rotated-piece (p/rotate piece)
+          ovelaps? (piece-overlaps? this rotated-piece)]
+      (if ovelaps? 
+        this
+        (assoc this :piece rotated-piece))))
 
   (piece-overlaps? [this new-piece-position]
     (let [{:keys [_ bucket]} this

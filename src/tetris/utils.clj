@@ -16,3 +16,13 @@
   "Take a vectorized state and only replace zeros with nil."
   [vectorized-state lattice]
   (map #(if (pos? %1) %2 nil) vectorized-state lattice))
+
+(defn rightmost
+  "Go over all of piece's parts and find the x-coord of the rightmost."
+  [parts]
+  (apply max (map first parts)))
+
+(defn leftmost
+  "Go over all of piece's parts and find the x-coord of the leftmost."
+  [parts]
+  (apply min (map first parts)))
