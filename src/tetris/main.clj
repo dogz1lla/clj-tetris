@@ -15,7 +15,8 @@
 ;; 
 ;; DONE rewrite piece logic so that it is centered around a unit vector 
 ;; attached to the piece, this way can encode orientation
-;; TODO implement step-piece pair and the tau piece
+;; DONE implement step-piece pair and the tau piece
+;; DONE eliminate code repetition in piece.clj
 ;; TODO implement full line erasure
 (ns tetris.main
   (:require [tetris.game-state :as gs]
