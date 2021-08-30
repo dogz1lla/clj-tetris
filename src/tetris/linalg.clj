@@ -39,3 +39,5 @@
 (defn rotation-matrix
   [phi]
   [[(Math/cos phi) (- (Math/sin phi))] [(Math/sin phi) (Math/cos phi)]])
+
+(def R-pi [[0 -1] [1 0]])
