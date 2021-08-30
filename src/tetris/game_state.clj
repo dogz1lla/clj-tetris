@@ -7,10 +7,13 @@
 ;; all implemented pieces, choose one randomly
 ;; ============================================================================
 (def implemented-pieces
-  [#_p/gamma-piece
-   #_p/square-piece
+  [p/gamma-piece
+   p/square-piece
    p/sausage-piece
-   #_p/gamma-piece-mirror])
+   p/step-piece
+   p/step-piece-mirror
+   p/tau-piece
+   p/gamma-piece-mirror])
 
 (defn choose-piece-randomly
   []
@@ -88,7 +91,7 @@
   (choose-next-piece [this]
     (let [{:keys [_ bucket]} this
           {:keys [width _ _]} bucket]
-      ((choose-piece-randomly) 0 0 width)))
+      ((choose-piece-randomly) 1 0 width)))
 
   (spawn-piece [this] 
     (let [new-piece (choose-next-piece this)]
