@@ -10,18 +10,48 @@
   "A tetris piece protocol."
   (parts [this] 
     "Get a list of sub-pieces.")
-  (shift [this dx]
-    "Translate the piece horizontally by dx.")
-  (fall [this dy]
-    "Descend the piece by one unit.")
-  (check-right-wall-collision [this width]
-    "Check if there is a collision with a right wall.")
-  (check-left-wall-collision [this]
-    "Check if there is a collision with a left wall.")
-  (rotate [this]
-    "Rotate the piece by pi/2 clockwise.")
   (compensate-rotation [this position orientation]
     "To not shift the piece after rotation we need to compensate for it."))
+
+;; ============================================================================
+;; Methods common to all pieces
+;; ============================================================================
+(defn shift [piece dx]
+  (let [{:keys [orientation position]} piece
+        new-position (la/vec+ position (la/scale dx [1 0]))]
+    (assoc piece :position new-position :orientation orientation)))
+
+(defn fall [piece dy]
+  (let [{:keys [orientation position]} piece
+        new-position (la/vec+ position (la/scale dy [0 1]))]
+    (assoc piece :position new-position :orientation orientation)))
+
+(defn check-right-wall-collision [piece width]
+  (loop [current-piece piece]
+    (let [piece-parts (parts current-piece)
+          rightmost (u/rightmost piece-parts)]
+      (if (< rightmost width)
+        current-piece
+        (recur (shift current-piece -1))))))
+
+(defn check-left-wall-collision [piece]
+  (loop [current-piece piece]
+    (let [piece-parts (parts current-piece)
+          leftmost (u/leftmost piece-parts)]
+      (if (>= leftmost 0)
+        current-piece
+        (recur (shift current-piece 1))))))
+
+(defn rotate [piece]
+  (let [{:keys [position orientation]} piece
+        R (la/rotation-matrix (* 0.5 Math/PI))
+        new-orientation (la/lin-transform R orientation)
+        ;; NOTE need to round elements of the orientation vector because
+        ;; coord has to have integer elements
+        new-orientation-int [(Math/round (first new-orientation)) 
+                             (Math/round (last new-orientation))]
+        new-position (compensate-rotation piece position new-orientation-int)]
+    (assoc piece :position new-position :orientation new-orientation-int)))
 
 
 ;; ============================================================================
@@ -49,44 +79,7 @@
       [ 1  0] (la/vec+ position [ 0 -2])
       [ 0  1] (la/vec+ position [ 1  0])
       [-1  0] (la/vec+ position [ 1  1])
-      [ 0 -1] (la/vec+ position [-2  1])))
-
-  (shift [this dx]
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dx [1 0]))]
-      (->GammaPiece new-position orientation)))
-
-  (fall [this dy] 
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dy [0 1]))]
-      (->GammaPiece new-position orientation)))
-
-  (check-left-wall-collision [this]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            leftmost (u/leftmost piece-parts)]
-        (if (>= leftmost 0)
-          current-piece
-          (recur (shift current-piece 1))))))
-
-  (check-right-wall-collision [this width]
-      (loop [current-piece this]
-        (let [piece-parts (parts current-piece)
-              rightmost (u/rightmost piece-parts)]
-          (if (< rightmost width)
-            current-piece
-            (recur (shift current-piece -1))))))
-
-  (rotate [this]
-    (let [{:keys [position orientation]} this
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          new-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          new-orientation-int [(Math/round (first new-orientation)) 
-                               (Math/round (last new-orientation))]
-          new-position (compensate-rotation this position new-orientation-int)]
-      (->GammaPiece new-position new-orientation-int))))
+      [ 0 -1] (la/vec+ position [-2  1]))))
 
 (defrecord SquarePiece [position orientation]
   Piece
@@ -100,36 +93,7 @@
       [p0 p1 p2 p3]))
 
   (compensate-rotation [_ position _]
-    position)
-
-  (shift [this dx]
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dx [1 0]))]
-      (->SquarePiece new-position orientation)))
-
-  (fall [this dy] 
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dy [0 1]))]
-      (->SquarePiece new-position orientation)))
-
-  (check-left-wall-collision [this]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            leftmost (u/leftmost piece-parts)]
-        (if (>= leftmost 0)
-          current-piece
-          (recur (shift current-piece 1))))))
-
-  (check-right-wall-collision [this width]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            rightmost (u/rightmost piece-parts)]
-        (if (< rightmost width)
-          current-piece
-          (recur (shift current-piece -1))))))
-
-  (rotate [this]
-    this))
+    position))
 
 (defrecord GammaPieceMirror [position orientation]
   Piece
@@ -153,44 +117,7 @@
       [ 1  0] (la/vec+ position [ 0 -2])
       [ 0  1] (la/vec+ position [ 1  0])
       [-1  0] (la/vec+ position [ 1  1])
-      [ 0 -1] (la/vec+ position [-2  1])))
-
-  (shift [this dx]
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dx [1 0]))]
-      (->GammaPieceMirror new-position orientation)))
-
-  (fall [this dy] 
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dy [0 1]))]
-      (->GammaPieceMirror new-position orientation)))
-
-  (check-left-wall-collision [this]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            leftmost (u/leftmost piece-parts)]
-        (if (>= leftmost 0)
-          current-piece
-          (recur (shift current-piece 1))))))
-
-  (check-right-wall-collision [this width]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            rightmost (u/rightmost piece-parts)]
-        (if (< rightmost width)
-          current-piece
-          (recur (shift current-piece -1))))))
-
-  (rotate [this]
-    (let [{:keys [position orientation]} this
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          new-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          new-orientation-int [(Math/round (first new-orientation)) 
-                               (Math/round (last new-orientation))]
-          new-position (compensate-rotation this position new-orientation-int)]
-      (->GammaPieceMirror new-position new-orientation-int))))
+      [ 0 -1] (la/vec+ position [-2  1]))))
 
 (defrecord SausagePiece [position orientation]
   Piece
@@ -208,44 +135,7 @@
       [ 1  0] (la/vec+ position [ 0 -3])
       [ 0  1] position 
       [-1  0] (la/vec+ position [ 3  0])
-      [ 0 -1] (la/vec+ position [-3  3])))
-
-  (shift [this dx]
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dx [1 0]))]
-      (->SausagePiece new-position orientation)))
-
-  (fall [this dy] 
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dy [0 1]))]
-      (->SausagePiece new-position orientation)))
-
-  (check-left-wall-collision [this]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            leftmost (u/leftmost piece-parts)]
-        (if (>= leftmost 0)
-          current-piece
-          (recur (shift current-piece 1))))))
-
-  (check-right-wall-collision [this width]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            rightmost (u/rightmost piece-parts)]
-        (if (< rightmost width)
-          current-piece
-          (recur (shift current-piece -1))))))
-
-  (rotate [this]
-    (let [{:keys [position orientation]} this
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          new-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          new-orientation-int [(Math/round (first new-orientation)) 
-                               (Math/round (last new-orientation))]
-          new-position (compensate-rotation this position new-orientation-int)]
-      (->SausagePiece new-position new-orientation-int))))
+      [ 0 -1] (la/vec+ position [-3  3]))))
 
 (defrecord StepPiece [position orientation]
   Piece
@@ -269,44 +159,7 @@
       [ 1  0] (la/vec+ position [ 0 -1])
       [ 0  1] (la/vec+ position [ 1  1])
       [-1  0] (la/vec+ position [-1  0])
-      [ 0 -1] (la/vec+ position [ 0  0])))
-
-  (shift [this dx]
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dx [1 0]))]
-      (->StepPiece new-position orientation)))
-
-  (fall [this dy] 
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dy [0 1]))]
-      (->StepPiece new-position orientation)))
-
-  (check-left-wall-collision [this]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            leftmost (u/leftmost piece-parts)]
-        (if (>= leftmost 0)
-          current-piece
-          (recur (shift current-piece 1))))))
-
-  (check-right-wall-collision [this width]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            rightmost (u/rightmost piece-parts)]
-        (if (< rightmost width)
-          current-piece
-          (recur (shift current-piece -1))))))
-
-  (rotate [this]
-    (let [{:keys [position orientation]} this
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          new-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          new-orientation-int [(Math/round (first new-orientation)) 
-                               (Math/round (last new-orientation))]
-          new-position (compensate-rotation this position new-orientation-int)]
-      (->StepPiece new-position new-orientation-int))))
+      [ 0 -1] (la/vec+ position [ 0  0]))))
 
 (defrecord StepPieceMirror [position orientation]
   Piece
@@ -330,44 +183,7 @@
       [ 1  0] (la/vec+ position [ 0 -2])
       [ 0  1] (la/vec+ position [ 1  0])
       [-1  0] (la/vec+ position [ 1  1])
-      [ 0 -1] (la/vec+ position [-2  1])))
-
-  (shift [this dx]
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dx [1 0]))]
-      (->StepPieceMirror new-position orientation)))
-
-  (fall [this dy] 
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dy [0 1]))]
-      (->StepPieceMirror new-position orientation)))
-
-  (check-left-wall-collision [this]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            leftmost (u/leftmost piece-parts)]
-        (if (>= leftmost 0)
-          current-piece
-          (recur (shift current-piece 1))))))
-
-  (check-right-wall-collision [this width]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            rightmost (u/rightmost piece-parts)]
-        (if (< rightmost width)
-          current-piece
-          (recur (shift current-piece -1))))))
-
-  (rotate [this]
-    (let [{:keys [position orientation]} this
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          new-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          new-orientation-int [(Math/round (first new-orientation)) 
-                               (Math/round (last new-orientation))]
-          new-position (compensate-rotation this position new-orientation-int)]
-      (->StepPieceMirror new-position new-orientation-int))))
+      [ 0 -1] (la/vec+ position [-2  1]))))
 
 (defrecord TauPiece [position orientation]
   Piece
@@ -391,44 +207,7 @@
       [ 1  0] (la/vec+ position [ 0 -1])
       [ 0  1] (la/vec+ position [ 0  1])
       [-1  0] (la/vec+ position [ 0  0])
-      [ 0 -1] (la/vec+ position [ 0  0])))
-
-  (shift [this dx]
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dx [1 0]))]
-      (->TauPiece new-position orientation)))
-
-  (fall [this dy] 
-    (let [{:keys [orientation position]} this
-          new-position (la/vec+ position (la/scale dy [0 1]))]
-      (->TauPiece new-position orientation)))
-
-  (check-left-wall-collision [this]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            leftmost (u/leftmost piece-parts)]
-        (if (>= leftmost 0)
-          current-piece
-          (recur (shift current-piece 1))))))
-
-  (check-right-wall-collision [this width]
-    (loop [current-piece this]
-      (let [piece-parts (parts current-piece)
-            rightmost (u/rightmost piece-parts)]
-        (if (< rightmost width)
-          current-piece
-          (recur (shift current-piece -1))))))
-
-  (rotate [this]
-    (let [{:keys [position orientation]} this
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          new-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          new-orientation-int [(Math/round (first new-orientation)) 
-                               (Math/round (last new-orientation))]
-          new-position (compensate-rotation this position new-orientation-int)]
-      (->TauPiece new-position new-orientation-int))))
+      [ 0 -1] (la/vec+ position [ 0  0]))))
 
 
 ;; ============================================================================
