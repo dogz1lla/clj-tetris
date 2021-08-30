@@ -15,6 +15,7 @@
 ;; 
 ;; DONE rewrite piece logic so that it is centered around a unit vector 
 ;; attached to the piece, this way can encode orientation
+;; TODO implement step-piece pair and the tau piece
 ;; TODO implement full line erasure
 (ns tetris.main
   (:require [tetris.game-state :as gs]
@@ -116,10 +117,10 @@
     nil)
   ;; draw the latest iteration of the game state
   ;; NOTE test mode here
-  (if (< (count @game-history) 10)
+  ;;(if (< (count @game-history) 10)
     (let [history (update-game)]
       (draw-game-state (last @history) lattice))
-    (draw-game-state (last @game-history) lattice)))
+    (draw-game-state (last @game-history) lattice));;)
 
 (defn render-game []
   (q/defsketch tetris-animation
