@@ -8,23 +8,23 @@
 ;; ============================================================================
 (defprotocol Piece
   "A tetris piece protocol."
-  (parts [this] 
+  (parts [piece] 
     "Get a list of sub-pieces.")
-  (compensate-rotation [this position orientation]
+  (compensate-rotation [piece position orientation]
     "To not shift the piece after rotation we need to compensate for it."))
 
 ;; ============================================================================
 ;; Methods common to all pieces
 ;; ============================================================================
 (defn shift [piece dx]
-  (let [{:keys [orientation position]} piece
+  (let [{:keys [position]} piece
         new-position (la/vec+ position (la/scale dx [1 0]))]
-    (assoc piece :position new-position :orientation orientation)))
+    (assoc piece :position new-position)))
 
 (defn fall [piece dy]
-  (let [{:keys [orientation position]} piece
+  (let [{:keys [position]} piece
         new-position (la/vec+ position (la/scale dy [0 1]))]
-    (assoc piece :position new-position :orientation orientation)))
+    (assoc piece :position new-position)))
 
 (defn check-right-wall-collision [piece width]
   (loop [current-piece piece]
@@ -44,14 +44,9 @@
 
 (defn rotate [piece]
   (let [{:keys [position orientation]} piece
-        R (la/rotation-matrix (* 0.5 Math/PI))
-        new-orientation (la/lin-transform R orientation)
-        ;; NOTE need to round elements of the orientation vector because
-        ;; coord has to have integer elements
-        new-orientation-int [(Math/round (first new-orientation)) 
-                             (Math/round (last new-orientation))]
-        new-position (compensate-rotation piece position new-orientation-int)]
-    (assoc piece :position new-position :orientation new-orientation-int)))
+        new-orientation (la/lin-transform la/R-pi orientation)
+        new-position (compensate-rotation piece position new-orientation)]
+    (assoc piece :position new-position :orientation new-orientation)))
 
 
 ;; ============================================================================
@@ -65,13 +60,8 @@
           p0 position
           p1 (la/vec+ p0 orientation)
           p2 (la/vec+ p1 orientation)
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          orth-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          orth-orientation-int [(Math/round (first orth-orientation)) 
-                                (Math/round (last orth-orientation))]
-          p3 (la/vec+ position orth-orientation-int)]
+          orth-orientation (la/lin-transform la/R-pi orientation)
+          p3 (la/vec+ position orth-orientation)]
       [p0 p1 p2 p3]))
 
   (compensate-rotation [_ position orientation]
@@ -103,13 +93,8 @@
           p0 position
           p1 (la/vec+ p0 orientation)
           p2 (la/vec+ p1 orientation)
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          orth-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          orth-orientation-int [(Math/round (first orth-orientation)) 
-                                (Math/round (last orth-orientation))]
-          p3 (la/vec+ p2 orth-orientation-int)]
+          orth-orientation (la/lin-transform la/R-pi orientation)
+          p3 (la/vec+ p2 orth-orientation)]
       [p0 p1 p2 p3]))
 
   (compensate-rotation [_ position orientation]
@@ -144,13 +129,8 @@
     (let [{:keys [position orientation]} this
           p0 position
           p1 (la/vec+ p0 orientation)
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          orth-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          orth-orientation-int [(Math/round (first orth-orientation)) 
-                                (Math/round (last orth-orientation))]
-          p2 (la/vec+ p0 orth-orientation-int)
+          orth-orientation (la/lin-transform la/R-pi orientation)
+          p2 (la/vec+ p0 orth-orientation)
           p3 (la/vec+ p2 (la/scale -1 orientation))]
       [p0 p1 p2 p3]))
 
@@ -168,13 +148,8 @@
     (let [{:keys [position orientation]} this
           p0 position
           p1 (la/vec+ p0 orientation)
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          orth-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          orth-orientation-int [(Math/round (first orth-orientation)) 
-                                (Math/round (last orth-orientation))]
-          p2 (la/vec+ p1 orth-orientation-int)
+          orth-orientation (la/lin-transform la/R-pi orientation)
+          p2 (la/vec+ p1 orth-orientation)
           p3 (la/vec+ p2 orientation)]
       [p0 p1 p2 p3]))
 
@@ -193,13 +168,8 @@
           p0 position
           p1 (la/vec+ p0 orientation)
           p2 (la/vec+ p0 (la/scale -1 orientation))
-          R (la/rotation-matrix (* 0.5 Math/PI))
-          orth-orientation (la/lin-transform R orientation)
-          ;; NOTE need to round elements of the orientation vector because
-          ;; coord has to have integer elements
-          orth-orientation-int [(Math/round (first orth-orientation)) 
-                                (Math/round (last orth-orientation))]
-          p3 (la/vec+ p0 orth-orientation-int)]
+          orth-orientation (la/lin-transform la/R-pi orientation)
+          p3 (la/vec+ p0 orth-orientation)]
       [p0 p1 p2 p3]))
 
   (compensate-rotation [_ position orientation]
