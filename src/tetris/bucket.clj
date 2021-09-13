@@ -6,11 +6,46 @@
 ;; ============================================================================
 (defprotocol BucketProtocol
   "A bucket protocol."
+  (full-rows [this]
+    "Return a collection of y-coordinates of rows that are full.")
+  (erase-row [this ys]
+    "Erase a row of sub-pieces with y-coordinate y.")
+  (avalanche [this ys]
+    "Shift all subpieces with y-coord > y by one unit down.")
   (overflown? [this] 
     "Check if the bucket is overflown."))
 
+(defn drop-rows 
+  [contents y]
+  (mapv #(if (> y (last %)) [(first %) (inc (last %))] %) contents))
+
+(defn drop-all-rows
+  [contents ys]
+  (reduce #(drop-rows %1 %2) contents ys))
+
 (defrecord Bucket [width height contents]
   BucketProtocol
+
+  (full-rows
+    [this]
+    (let [{:keys [width contents]} this]
+      (->> contents
+           (map last)
+           (frequencies)
+           (filter #(= width (last %)))
+           (map first))))
+
+  (avalanche 
+    [this ys]
+    (let [{:keys [contents]} this
+          new-contents (reduce #(drop-rows %1 %2) contents ys)]
+      (assoc this :contents new-contents)))
+  
+  (erase-row 
+    [this ys]
+    (let [{:keys [contents]} this
+          filtered (filterv #(not (contains? (set ys) (last %))) contents)]
+      (assoc this :contents filtered)))
 
   (overflown?
     [this] 

@@ -73,7 +73,7 @@
   "quil setup function."
   []
   (clear-screen)
-  (q/frame-rate 10))
+  (q/frame-rate 5))
 
 (defn draw-game-state
   "Vectorize the game state and draw unit pieces."
@@ -119,9 +119,9 @@
   ;; draw the latest iteration of the game state
   ;; NOTE test mode here
   ;;(if (< (count @game-history) 10)
-    (let [history (update-game)]
-      (draw-game-state (last @history) lattice))
-    (draw-game-state (last @game-history) lattice));;)
+  (let [history (update-game)]
+    (draw-game-state (last @history) lattice))
+  (draw-game-state (last @game-history) lattice));;)
 
 (defn render-game []
   (q/defsketch tetris-animation
