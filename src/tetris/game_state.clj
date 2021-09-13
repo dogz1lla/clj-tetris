@@ -33,6 +33,8 @@
     the next space is occupied.")
   (freeze-piece [this]
     "When piece is sinked it becomes a part of bucket contents.")
+  (clear-full-rows [this]
+    "Check if there are any full rows and if yes then erase them.")
   (choose-next-piece [this]
     "Choose how to spawn a new piece.")
   (move-piece [this]
@@ -88,6 +90,13 @@
           nil-piece nil]
       (Tetris. nil-piece new-bucket)))
 
+  (clear-full-rows [this]
+    (let [{:keys [bucket]} this
+          full-rows (b/full-rows bucket)
+          new-bucket-with-gaps (b/erase-row bucket full-rows)
+          new-bucket (b/avalanche new-bucket-with-gaps full-rows)]
+      (assoc this :bucket new-bucket)))
+
   (choose-next-piece [this]
     (let [{:keys [_ bucket]} this
           {:keys [width _ _]} bucket]
@@ -107,7 +116,10 @@
 
   (step [this]
     (if (piece-sinked? this)
-      (-> this freeze-piece spawn-piece)
+      (-> this 
+          freeze-piece 
+          clear-full-rows 
+          spawn-piece)
       (move-piece this)))
   
   (shift-piece [this dx] 
