@@ -11,17 +11,13 @@
   (erase-row [this ys]
     "Erase a row of sub-pieces with y-coordinate y.")
   (avalanche [this ys]
-    "Shift all subpieces with y-coord > y by one unit down.")
+    "Shift all rows with y-coord > y in ys by one unit down.")
   (overflown? [this] 
     "Check if the bucket is overflown."))
 
 (defn drop-rows 
   [contents y]
   (mapv #(if (> y (last %)) [(first %) (inc (last %))] %) contents))
-
-(defn drop-all-rows
-  [contents ys]
-  (reduce #(drop-rows %1 %2) contents ys))
 
 (defrecord Bucket [width height contents]
   BucketProtocol
