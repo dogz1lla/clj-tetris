@@ -17,7 +17,7 @@
 ;; attached to the piece, this way can encode orientation
 ;; DONE implement step-piece pair and the tau piece
 ;; DONE eliminate code repetition in piece.clj
-;; TODO implement full line erasure
+;; DONE implement full line erasure
 (ns tetris.main
   (:require [tetris.game-state :as gs]
             [tetris.pieces :as p]
